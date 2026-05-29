@@ -2,6 +2,8 @@ const { Client, GatewayIntentBits, Events } = require('discord.js');
 const { joinVoiceChannel, VoiceConnectionStatus, entersState, getVoiceConnection } = require('@discordjs/voice');
 const { SessionRecorder } = require('./recorder');
 const { resolveCharacterMap } = require('./utils');
+const botState = require('./bot-state');
+const { startUI } = require('./ui-server');
 const path = require('path');
 require('dotenv').config();
 
@@ -29,6 +31,7 @@ const intentionalDisconnects = new Set(); // guildIds where we intentionally lef
 
 client.once(Events.ClientReady, () => {
   console.log(`Bot ready! Logged in as ${client.user.tag}`);
+  botState.setBotOnline(true);
 });
 
 client.on(Events.MessageCreate, async (message) => {
@@ -214,3 +217,6 @@ async function handleHelp(message) {
 }
 
 client.login(process.env.DISCORD_TOKEN);
+
+// Start the web UI
+startUI();

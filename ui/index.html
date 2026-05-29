@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>D&D Session Recorder</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="container">
+    <header>
+      <h1>🎲 D&D Session Recorder</h1>
+      <div id="bot-status" class="status-badge offline">Bot Offline</div>
+    </header>
+
+    <nav>
+      <button class="tab active" data-tab="recordings">Recordings</button>
+      <button class="tab" data-tab="transcripts">Transcripts</button>
+      <button class="tab" data-tab="characters">Characters</button>
+      <button class="tab" data-tab="settings">Settings</button>
+    </nav>
+
+    <!-- Recordings Tab -->
+    <section id="tab-recordings" class="tab-content active">
+      <div class="section-header">
+        <h2>Recordings</h2>
+      </div>
+      <div id="recordings-list" class="card-list">
+        <p class="empty-state">No recordings yet. Use <code>!session start "Title"</code> in Discord to begin.</p>
+      </div>
+    </section>
+
+    <!-- Transcripts Tab -->
+    <section id="tab-transcripts" class="tab-content">
+      <div class="section-header">
+        <h2>Transcripts</h2>
+      </div>
+      <div id="transcripts-list" class="card-list">
+        <p class="empty-state">No transcripts yet. Transcribe a recording to get started.</p>
+      </div>
+
+      <!-- Transcript Viewer -->
+      <div id="transcript-viewer" class="hidden">
+        <div class="viewer-header">
+          <h3 id="viewer-title"></h3>
+          <button id="close-viewer" class="btn btn-small">✕ Close</button>
+        </div>
+        <div id="viewer-content" class="transcript-text"></div>
+      </div>
+    </section>
+
+    <!-- Characters Tab -->
+    <section id="tab-characters" class="tab-content">
+      <h2>Character Map</h2>
+      <p class="help-text">Map Discord display names to character names. The bot will match these when recording.</p>
+      <div id="character-entries"></div>
+      <button id="add-character" class="btn">+ Add Character</button>
+      <div class="form-group" style="margin-top: 1rem;">
+        <label>DM Username</label>
+        <input type="text" id="dm-username" placeholder="Your Discord display name">
+      </div>
+      <button id="save-characters" class="btn btn-primary">Save Character Map</button>
+      <div id="characters-status" class="status-msg"></div>
+    </section>
+
+    <!-- Settings Tab -->
+    <section id="tab-settings" class="tab-content">
+      <h2>Settings</h2>
+      <div class="form-group">
+        <label>Discord Bot Token</label>
+        <input type="password" id="bot-token" placeholder="Paste your bot token here">
+        <p class="help-text">Get a token from <a href="https://discord.com/developers/applications" target="_blank">Discord Developer Portal</a></p>
+      </div>
+      <div class="form-group">
+        <label>Command Prefix</label>
+        <input type="text" id="cmd-prefix" value="!" maxlength="3">
+      </div>
+      <button id="save-settings" class="btn btn-primary">Save Settings</button>
+      <div id="settings-status" class="status-msg"></div>
+    </section>
+  </div>
+
+  <!-- Transcribe Modal -->
+  <div id="transcribe-modal" class="modal hidden">
+    <div class="modal-content">
+      <h3>Transcribe Recording</h3>
+      <p id="transcribe-target"></p>
+      <div class="form-group">
+        <label>Quality Preset</label>
+        <select id="transcribe-preset">
+          <option value="fast">Fast (lower accuracy, quick results)</option>
+          <option value="balanced">Balanced (good accuracy, moderate speed)</option>
+          <option value="quality" selected>Quality (high accuracy, recommended)</option>
+          <option value="best">Best (highest accuracy, GPU recommended)</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button id="transcribe-cancel" class="btn">Cancel</button>
+        <button id="transcribe-start" class="btn btn-primary">Start Transcription</button>
+      </div>
+      <div id="transcribe-progress" class="hidden">
+        <div class="spinner"></div>
+        <p>Transcribing... This may take a few minutes.</p>
+      </div>
+      <div id="transcribe-result" class="hidden"></div>
+    </div>
+  </div>
+
+  <!-- Condense Modal -->
+  <div id="condense-modal" class="modal hidden">
+    <div class="modal-content">
+      <h3>Condense Transcript</h3>
+      <p id="condense-target"></p>
+      <div class="form-group">
+        <label>Mode</label>
+        <select id="condense-mode">
+          <option value="normal">Normal (remove fillers, merge segments)</option>
+          <option value="aggressive">Aggressive (also remove table talk)</option>
+          <option value="game-only">Game Only (keep only D&D content)</option>
+        </select>
+      </div>
+      <div class="modal-actions">
+        <button id="condense-cancel" class="btn">Cancel</button>
+        <button id="condense-start" class="btn btn-primary">Condense</button>
+      </div>
+      <div id="condense-progress" class="hidden">
+        <div class="spinner"></div>
+        <p>Condensing...</p>
+      </div>
+      <div id="condense-result" class="hidden"></div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
