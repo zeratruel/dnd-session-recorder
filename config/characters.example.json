@@ -1,7 +1,8 @@
 {
   "characterMap": {
-    "DiscordUsername1": "CharacterName1",
-    "DiscordUsername2": "CharacterName2"
+    "Heather": "Gilbert",
+    "Mike": "John McClean",
+    "Sarah": "Thornwick"
   },
-  "dmUsername": "DiscordUsername_of_DM"
+  "dmUsername": "YourDiscordName"
 }

@@ -1,7 +1,7 @@
 const { Client, GatewayIntentBits, Events } = require('discord.js');
 const { joinVoiceChannel, VoiceConnectionStatus, entersState, getVoiceConnection } = require('@discordjs/voice');
 const { SessionRecorder } = require('./recorder');
-const { loadCharacterMap } = require('./utils');
+const { resolveCharacterMap } = require('./utils');
 const path = require('path');
 require('dotenv').config();
 
@@ -154,7 +154,7 @@ async function handleSession(message, args) {
 
       // Parse title from remaining args (supports quotes)
       const title = args.join(' ').replace(/^["']|["']$/g, '') || `Session ${Date.now()}`;
-      const characterMap = loadCharacterMap();
+      const characterMap = await resolveCharacterMap(message.guild);
 
       const session = new SessionRecorder(connection, guildId, title, characterMap);
       await session.start();
