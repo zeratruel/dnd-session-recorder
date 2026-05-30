@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GM Companion — Safe Port Gaming</title>
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    /* Page-specific styles */
+    .tool-hero {
+      background: linear-gradient(135deg, #1a2a3a 0%, #0d1f2d 50%, #1a1a0a 100%);
+      color: white;
+      text-align: center;
+      padding: 140px 20px 100px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tool-hero::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background-image:
+        radial-gradient(ellipse at 30% 60%, rgba(184,134,11,0.15) 0%, transparent 50%),
+        radial-gradient(ellipse at 70% 30%, rgba(56,100,160,0.12) 0%, transparent 50%);
+    }
+
+    .tool-hero-content {
+      position: relative;
+      z-index: 1;
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .tool-hero h1 {
+      font-family: var(--font-display);
+      font-size: 3rem;
+      font-weight: 700;
+      letter-spacing: 2px;
+      color: #f0d080;
+      margin-bottom: 0.5rem;
+      text-shadow: 0 0 40px rgba(184,134,11,0.5);
+    }
+
+    .tool-hero .subtitle {
+      font-size: 1.15rem;
+      color: #c8d8e8;
+      opacity: 0.85;
+      margin-bottom: 2rem;
+    }
+
+    .d20-hero-icon {
+      color: #d4a017;
+      margin-bottom: 1rem;
+      filter: drop-shadow(0 0 12px rgba(212,160,23,0.4));
+    }
+
+    .hero-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--accent);
+      color: #1a1a1a;
+      padding: 14px 32px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-weight: 600;
+      font-size: 1.05rem;
+      transition: var(--transition);
+      box-shadow: 0 4px 20px rgba(184,134,11,0.3);
+    }
+
+    .hero-cta:hover {
+      background: var(--accent-light);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 30px rgba(184,134,11,0.4);
+    }
+
+    /* Features Section */
+    .features-section {
+      padding: 80px 20px;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .features-section h2 {
+      font-family: var(--font-display);
+      text-align: center;
+      font-size: 1.8rem;
+      color: var(--accent);
+      margin-bottom: 3rem;
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+    }
+
+    .feature-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 2rem;
+      text-align: center;
+      transition: var(--transition);
+    }
+
+    .feature-card:hover {
+      border-color: var(--accent);
+      box-shadow: 0 4px 20px rgba(184,134,11,0.1);
+      transform: translateY(-3px);
+    }
+
+    .feature-icon {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .feature-card h3 {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      color: var(--accent);
+      margin-bottom: 0.75rem;
+    }
+
+    .feature-card p {
+      color: var(--text-light);
+      font-size: 0.9rem;
+      line-height: 1.6;
+    }
+
+    /* Setup Section */
+    .setup-section {
+      padding: 80px 20px;
+      background: var(--bg-section);
+    }
+
+    .setup-content {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .setup-section h2 {
+      font-family: var(--font-display);
+      text-align: center;
+      font-size: 1.8rem;
+      color: var(--accent);
+      margin-bottom: 3rem;
+    }
+
+    .setup-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .setup-step {
+      display: flex;
+      gap: 1.25rem;
+      align-items: flex-start;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+    }
+
+    .step-number {
+      background: var(--accent);
+      color: #1a1a1a;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 700;
+      font-size: 1rem;
+      flex-shrink: 0;
+    }
+
+    .step-content h3 {
+      font-family: var(--font-display);
+      font-size: 0.95rem;
+      color: var(--text);
+      margin-bottom: 0.4rem;
+    }
+
+    .step-content p {
+      color: var(--text-light);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .step-content a {
+      color: var(--accent);
+      text-decoration: none;
+    }
+
+    .step-content a:hover {
+      text-decoration: underline;
+    }
+
+    /* Requirements */
+    .requirements-section {
+      padding: 60px 20px;
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .requirements-section h2 {
+      font-family: var(--font-display);
+      text-align: center;
+      font-size: 1.5rem;
+      color: var(--accent);
+      margin-bottom: 2rem;
+    }
+
+    .req-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    .req-item {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.25rem;
+      text-align: center;
+    }
+
+    .req-item h4 {
+      font-family: var(--font-display);
+      color: var(--text);
+      font-size: 0.9rem;
+      margin-bottom: 0.3rem;
+    }
+
+    .req-item p {
+      color: var(--text-light);
+      font-size: 0.8rem;
+    }
+
+    .req-item a {
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.8rem;
+    }
+
+    /* CTA bottom */
+    .cta-section {
+      text-align: center;
+      padding: 80px 20px;
+    }
+
+    .cta-section h2 {
+      font-family: var(--font-display);
+      font-size: 1.6rem;
+      color: var(--accent);
+      margin-bottom: 1rem;
+    }
+
+    .cta-section p {
+      color: var(--text-light);
+      margin-bottom: 2rem;
+      font-size: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      .tool-hero h1 { font-size: 2.2rem; }
+      .features-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Include your site navbar here -->
+
+  <!-- Hero -->
+  <section class="tool-hero">
+    <div class="tool-hero-content">
+      <svg class="d20-hero-icon" viewBox="0 0 100 100" width="64" height="64">
+        <polygon points="50,2 93,27 93,73 50,98 7,73 7,27" fill="none" stroke="currentColor" stroke-width="3"/>
+        <polygon points="50,15 80,32 80,68 50,85 20,68 20,32" fill="none" stroke="currentColor" stroke-width="2"/>
+        <line x1="50" y1="2" x2="50" y2="15" stroke="currentColor" stroke-width="1.5"/>
+        <line x1="93" y1="27" x2="80" y2="32" stroke="currentColor" stroke-width="1.5"/>
+        <line x1="93" y1="73" x2="80" y2="68" stroke="currentColor" stroke-width="1.5"/>
+        <line x1="50" y1="98" x2="50" y2="85" stroke="currentColor" stroke-width="1.5"/>
+        <line x1="7" y1="73" x2="20" y2="68" stroke="currentColor" stroke-width="1.5"/>
+        <line x1="7" y1="27" x2="20" y2="32" stroke="currentColor" stroke-width="1.5"/>
+        <text x="50" y="58" text-anchor="middle" font-family="Cinzel, serif" font-size="26" font-weight="700" fill="currentColor">20</text>
+      </svg>
+      <h1>GM Companion</h1>
+      <p class="subtitle">Record and transcribe your tabletop sessions — free, private, and local.</p>
+      <a href="https://github.com/zeratruel/GM-Companion" class="hero-cta" target="_blank">
+        Download on GitHub
+      </a>
+    </div>
+  </section>
+
+  <!-- Features -->
+  <section class="features-section">
+    <h2>What It Does</h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="feature-icon">🎙️</div>
+        <h3>Record Sessions</h3>
+        <p>A Discord bot joins your voice channel and records each player separately. Perfect speaker attribution, no crosstalk issues.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📝</div>
+        <h3>Transcribe Locally</h3>
+        <p>Uses OpenAI's Whisper model running on your machine. No cloud, no API keys, no cost. Your audio never leaves your computer.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚡</div>
+        <h3>GPU Accelerated</h3>
+        <p>Auto-detects NVIDIA GPUs for fast transcription. A 3-hour session transcribes in minutes. Works on CPU too — just slower.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🧹</div>
+        <h3>Smart Condensing</h3>
+        <p>Remove filler words, table talk, and off-topic chatter. Keep just the story, the roleplay, and the key moments.</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🎭</div>
+        <h3>Character Names</h3>
+        <p>Map Discord usernames to character names. Transcripts read like a script — "DM: You enter the cavern..." not "User#1234".</p>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🖥️</div>
+        <h3>Control Panel</h3>
+        <p>A web-based UI for managing everything. Transcribe, condense, configure — no command line needed after setup.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Setup Steps -->
+  <section class="setup-section">
+    <div class="setup-content">
+      <h2>Get Started in 5 Minutes</h2>
+      <div class="setup-steps">
+        <div class="setup-step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h3>Download</h3>
+            <p>Clone or download from <a href="https://github.com/zeratruel/GM-Companion" target="_blank">GitHub</a>. Requires <a href="https://nodejs.org/" target="_blank">Node.js</a> and <a href="https://www.python.org/downloads/" target="_blank">Python</a>.</p>
+          </div>
+        </div>
+        <div class="setup-step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h3>Run Setup</h3>
+            <p>Double-click <code>setup.bat</code> (Windows) or run <code>./setup.sh</code> (Mac/Linux). It installs everything and walks you through configuration.</p>
+          </div>
+        </div>
+        <div class="setup-step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h3>Create a Discord Bot</h3>
+            <p>Go to the <a href="https://discord.com/developers/applications" target="_blank">Discord Developer Portal</a>, create an application, and paste your bot token when prompted.</p>
+          </div>
+        </div>
+        <div class="setup-step">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <h3>Add to Your Server</h3>
+            <p>Use the OAuth2 URL Generator to invite the bot with Connect, Speak, and message permissions.</p>
+          </div>
+        </div>
+        <div class="setup-step">
+          <div class="step-number">5</div>
+          <div class="step-content">
+            <h3>Start Recording</h3>
+            <p>Double-click <code>start.bat</code>, type <code>!join</code> in Discord, then <code>!session start "Session Title"</code>. That's it.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Requirements -->
+  <section class="requirements-section">
+    <h2>Requirements</h2>
+    <div class="req-grid">
+      <div class="req-item">
+        <h4>Node.js 18+</h4>
+        <p>JavaScript runtime</p>
+        <a href="https://nodejs.org/" target="_blank">Download</a>
+      </div>
+      <div class="req-item">
+        <h4>Python 3.10+</h4>
+        <p>For transcription</p>
+        <a href="https://www.python.org/downloads/" target="_blank">Download</a>
+      </div>
+      <div class="req-item">
+        <h4>8GB+ RAM</h4>
+        <p>16GB recommended</p>
+      </div>
+      <div class="req-item">
+        <h4>NVIDIA GPU</h4>
+        <p>Optional, speeds up transcription</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Bottom CTA -->
+  <section class="cta-section">
+    <h2>Ready to Never Forget a Session?</h2>
+    <p>Free, open source, and built for tabletop gamers.</p>
+    <a href="https://github.com/zeratruel/GM-Companion" class="hero-cta" target="_blank">
+      Get GM Companion
+    </a>
+  </section>
+
+  <!-- Include your site footer here -->
+
+</body>
+</html>

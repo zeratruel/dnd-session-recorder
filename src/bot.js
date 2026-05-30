@@ -175,7 +175,7 @@ async function handleSession(message, args) {
       const outputPath = await session.stop();
       activeSessions.delete(guildId);
 
-      message.reply(`⏹️ **Recording stopped!** Audio saved.\nFiles at: \`${outputPath}\`\nRun \`npm run transcribe\` to generate the transcript.`);
+      message.reply(`⏹️ **Recording stopped!** Audio saved.\nOpen the control panel to transcribe: http://localhost:3000`);
       break;
     }
 

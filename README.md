@@ -15,14 +15,28 @@ A Discord bot by **Safe Port Gaming** that records voice channel audio during ta
 - Condense transcripts by removing filler words and table talk
 - JSON output compatible with campaign management tools
 
+## Prerequisites
+
+Before you start, make sure you have these installed:
+
+- **Node.js** 18 or newer — [download here](https://nodejs.org/) (pick the LTS version)
+- **Python** 3.10 or newer — [download here](https://www.python.org/downloads/) (check "Add Python to PATH" during install)
+
+You'll also need a **Discord bot token** — the setup script walks you through creating one.
+
 ## Quick Start
 
-### First Time Setup
+### Step 1: Download
 
-**Windows:**
-```
-setup.bat
-```
+Download or clone this repository to your computer:
+- Click the green **Code** button on GitHub → **Download ZIP**
+- Or use git: `git clone https://github.com/zeratruel/GM-Companion.git`
+
+### Step 2: Run Setup
+
+Open the folder you downloaded and:
+
+**Windows:** Double-click `setup.bat`
 
 **Mac/Linux:**
 ```bash
@@ -31,38 +45,69 @@ chmod +x setup.sh
 ```
 
 The setup script will:
-1. Check that Node.js and Python are installed
-2. Install all dependencies
-3. Detect GPU and install acceleration libraries if available
-4. Walk you through bot token configuration
+1. Verify Node.js and Python are installed
+2. Install all dependencies automatically
+3. Detect if you have an NVIDIA GPU (optional, speeds things up)
+4. Ask you to paste a Discord bot token (instructions below)
 
-### Running the Bot
+### Step 3: Create a Discord Bot
 
-**Windows (recommended):**
-- Double-click `start.bat` — opens the control panel in your browser automatically
-- Or double-click `start-hidden.vbs` — runs silently in the background (no terminal window)
+This is a one-time process. You're creating a bot account that will join your voice channel.
 
-**Mac/Linux:**
-```bash
-npm start
-```
-Then open http://localhost:3000 in your browser.
+1. Go to the [Discord Developer Portal](https://discord.com/developers/applications)
+2. Click **New Application** — give it any name (e.g., "Session Recorder")
+3. In the left sidebar, click **Bot**
+4. Click **Reset Token**, then **Copy** the token — you'll paste this during setup
+5. Scroll down to **Privileged Gateway Intents** and enable:
+   - ✅ **Server Members Intent**
+   - ✅ **Message Content Intent**
+6. Click **Save Changes**
 
-### Stopping the Bot
+### Step 4: Add the Bot to Your Discord Server
 
-- If using `start.bat`: close the terminal window
-- If using `start-hidden.vbs`: open Task Manager, find `node.exe`, and end the task
-- Or use the terminal: `Ctrl+C`
+Still in the Developer Portal:
 
-## Prerequisites
+1. In the left sidebar, click **OAuth2 → URL Generator**
+2. Under **Scopes**, check: ✅ **bot**
+3. Under **Bot Permissions**, check:
+   - ✅ Connect
+   - ✅ Speak
+   - ✅ View Channels
+   - ✅ Send Messages
+   - ✅ Read Message History
+4. Copy the **Generated URL** at the bottom
+5. Open that URL in your browser
+6. Select your Discord server from the dropdown and click **Authorize**
 
-- **Node.js** 18+ — [download](https://nodejs.org/)
-- **Python** 3.10+ — [download](https://www.python.org/downloads/)
-- A Discord bot token — [create one](https://discord.com/developers/applications)
+The bot should now appear in your server's member list.
+
+### Step 5: Start the Bot
+
+**Windows:** Double-click `start.bat`
+
+This opens a terminal window (keep it open/minimized) and launches the control panel in your browser at **http://localhost:3000**.
+
+**Mac/Linux:** Run `npm start`, then open http://localhost:3000
+
+To stop the bot, close the terminal window.
+
+## How to Record a Session
+
+1. **Join a voice channel** in Discord (you and your players)
+2. In any text channel, type: `!join`
+   - The bot will join your voice channel
+3. Type: `!session start "Session Title"`
+   - Recording begins — everyone's audio is captured separately
+4. Play your session normally
+5. When done, type: `!session stop`
+   - Audio files are saved locally
+6. Open the **control panel** (http://localhost:3000) → **Recordings** tab → click **Transcribe**
+
+> **Important:** You must be in a voice channel when you type `!join`. The bot joins whatever channel you're currently in.
 
 ## Control Panel
 
-Once running, open **http://localhost:3000** to access:
+The control panel runs at **http://localhost:3000** whenever the bot is running.
 
 | Tab | What it does |
 |-----|-------------|
@@ -72,29 +117,9 @@ Once running, open **http://localhost:3000** to access:
 | **Characters** | Map Discord names to character names |
 | **Settings** | Configure bot token and command prefix |
 
-## Discord Setup
+## Character Map
 
-### Creating a Bot Token
-
-1. Go to [Discord Developer Portal](https://discord.com/developers/applications)
-2. Click **New Application** and give it a name
-3. Go to **Bot** in the left sidebar
-4. Click **Reset Token** and copy it
-5. Under **Privileged Gateway Intents**, enable:
-   - Server Members Intent
-   - Message Content Intent
-
-### Adding the Bot to Your Server
-
-1. Go to **OAuth2 > URL Generator** in the left sidebar
-2. Check **bot** under Scopes
-3. Check permissions: **Connect**, **Speak**, **View Channels**, **Send Messages**, **Read Message History**
-4. Copy the generated URL and open it in your browser
-5. Select your server and authorize
-
-## Configuration
-
-### Character Map
+Map your players' Discord display names to their in-game character names. This makes transcripts read like a script instead of showing Discord usernames.
 
 Open the **Characters** tab in the control panel, or edit `config/characters.json`:
 
@@ -109,53 +134,83 @@ Open the **Characters** tab in the control panel, or edit `config/characters.jso
 }
 ```
 
-Use Discord display names — no need to look up user IDs. User IDs also work if preferred.
+Just use the name as it appears in Discord — no special IDs or Developer Mode needed.
 
 ## Discord Commands
 
+Type these in any text channel where the bot can see messages:
+
 | Command | Description |
 |---------|-------------|
-| `!join` | Bot joins your current voice channel |
-| `!leave` | Bot leaves voice channel (stops recording) |
+| `!join` | Bot joins your current voice channel (you must be in one) |
+| `!leave` | Bot leaves voice channel (stops recording if active) |
 | `!session start "Title"` | Start recording with a session title |
 | `!session stop` | Stop recording and save audio files |
 | `!status` | Check current recording status |
 | `!help` | Show available commands |
 
-## Transcription
+## Transcription Presets
 
-Use the **Recordings** tab in the control panel and click **Transcribe**, or from the command line:
+When transcribing from the control panel, you can choose a quality level:
+
+| Preset | Speed | Accuracy | Best For |
+|--------|-------|----------|----------|
+| **Fast** | Very fast | Fair | Quick test, checking if audio recorded properly |
+| **Balanced** | Moderate | Good | Regular use on most computers |
+| **Quality** | Slower | Great | Recommended default for final transcripts |
+| **Best** | Slow on CPU, fast on GPU | Excellent | Best results if you have an NVIDIA GPU |
+
+### CLI Alternative
+
+If you prefer the command line:
+
+```bash
+cd transcriber
+venv\Scripts\activate       # Windows
+source venv/bin/activate    # Mac/Linux
+
+# Use a preset
+python transcribe.py --preset quality
+
+# Specify a recording folder directly
+python transcribe.py ../recordings/2026-05-27_Session_Title --model large-v3
+
+# Force CPU even if GPU is available
+python transcribe.py --preset best --device cpu
+
+# List all presets
+python transcribe.py --list-presets
+```
+
+## Condensing Modes
+
+After transcribing, you can condense the transcript to remove noise:
+
+| Mode | What it removes |
+|------|----------------|
+| **Normal** | Filler words (um, uh, like), merges short segments |
+| **Aggressive** | Also removes table talk (mic checks, "brb", "whose turn") |
+| **Game Only** | Keeps only in-game content + all DM narration |
+
+### CLI Alternative
 
 ```bash
 cd transcriber
 venv\Scripts\activate
-python transcribe.py --preset quality
+
+# Normal condensing
+python condense.py ../transcripts/session.json
+
+# Aggressive mode
+python condense.py ../transcripts/session.json --mode aggressive
+
+# Game-only mode with custom output path
+python condense.py ../transcripts/session.json --mode game-only -o clean_session.json
 ```
-
-### Presets
-
-| Preset | Model | Best For |
-|--------|-------|----------|
-| `fast` | tiny | Quick drafts, testing |
-| `balanced` | small | Most hardware, good accuracy |
-| `quality` | medium | Recommended default |
-| `best` | large-v3 | Best accuracy (GPU recommended) |
-
-### Condensing
-
-Use the **Transcripts** tab and click **Condense**, or from the command line:
-
-```bash
-python condense.py transcripts/session.json --mode aggressive
-```
-
-| Mode | What it does |
-|------|-------------|
-| `normal` | Remove fillers, merge consecutive segments |
-| `aggressive` | Also removes table talk (mic checks, breaks) |
-| `game-only` | Keeps only D&D content + all DM narration |
 
 ## Output Format
+
+Transcripts are saved as JSON files:
 
 ```json
 {
@@ -178,69 +233,55 @@ python condense.py transcripts/session.json --mode aggressive
 }
 ```
 
-## Project Structure
-
-```
-├── src/
-│   ├── bot.js           # Discord bot + entry point
-│   ├── bot-state.js     # Shared state for UI
-│   ├── ui-server.js     # Web control panel server
-│   ├── recorder.js      # Audio recording logic
-│   ├── opus-decoder.js  # Opus to PCM stream decoder
-│   └── utils.js         # Character map resolution + utilities
-├── ui/
-│   ├── index.html       # Control panel page
-│   ├── style.css        # Safe Port Gaming themed styling
-│   └── app.js           # Frontend logic
-├── transcriber/
-│   ├── transcribe.py    # Main transcription pipeline
-│   ├── condense.py      # Transcript condensing
-│   └── requirements.txt # Python dependencies
-├── config/
-│   └── characters.example.json  # Template for character mapping
-├── recordings/          # Raw audio files (gitignored)
-├── transcripts/         # Output JSON/TXT files (gitignored)
-├── start.bat            # Windows launcher (with terminal)
-├── start-hidden.vbs     # Windows launcher (no terminal)
-├── setup.bat            # Windows setup script
-├── setup.sh             # Mac/Linux setup script
-└── package.json
-```
-
 ## Hardware Requirements
 
-| Setup | RAM | Transcription Speed | Recommended Preset |
-|-------|-----|--------------------|--------------------|
-| CPU only, 8GB RAM | 8GB+ | ~15-20 min per hour of audio | balanced |
-| CPU only, 16GB RAM | 16GB+ | ~10-15 min per hour of audio | quality |
-| NVIDIA GPU, 6GB VRAM | 16GB+ | ~3-5 min per hour of audio | best |
-| NVIDIA GPU, 8GB+ VRAM | 16GB+ | ~2-3 min per hour of audio | best |
+| Your Setup | Transcription Speed | Recommended Preset |
+|------------|--------------------|--------------------|
+| Any modern computer, 8GB RAM | ~15-20 min per hour of audio | Balanced |
+| 16GB RAM | ~10-15 min per hour of audio | Quality |
+| NVIDIA GPU (6GB+ VRAM) | ~2-5 min per hour of audio | Best |
 
 ## Troubleshooting
 
 **Bot doesn't respond to commands:**
-- Make sure Message Content Intent is enabled in the Discord Developer Portal
-- Check that the bot has View Channels permission in the text channel
+- Make sure **Message Content Intent** is enabled in the Developer Portal (Bot settings)
+- Make sure the bot has permission to read the text channel you're typing in
 
-**Bot joins but "Failed to join voice channel":**
-- Ensure the bot has Connect and Speak permissions on the voice channel
-- Check that Privileged Gateway Intents are enabled
+**Bot joins voice but "Failed to join":**
+- Make sure the bot has **Connect** and **Speak** permissions on that voice channel
+- Try: Server Settings → Roles → find the bot's role → enable Connect and Speak
 
 **No audio files after recording:**
-- The voice connection may not have fully established
 - Try `!leave` then `!join` again before starting a session
+- Make sure at least one person talks after `!session start`
 
-**Transcription hallucinating (wrong text):**
-- Make sure you're transcribing a recording made with the current bot version
-- Try a larger model (--preset quality or --preset best)
+**Transcription produces wrong text:**
+- This can happen with very short recordings or silence
+- Try a longer recording with clear speech
+- Use the **Quality** or **Best** preset for better accuracy
 
-**CUDA/GPU errors:**
-- Use the "balanced" or "quality" preset (they work fine on CPU)
-- Or select a preset in the control panel — it auto-detects your hardware
+**GPU not detected:**
+- Make sure your NVIDIA drivers are up to date
+- The **Balanced** and **Quality** presets work great on CPU — GPU is optional
 
 **Control panel won't open:**
-- Make sure the bot is running (`start.bat` or `npm start`)
-- Try manually opening http://localhost:3000 in your browser
+- Make sure the bot is running (terminal window open or `start-hidden.vbs` active)
+- Try opening http://localhost:3000 manually in your browser
+
+## Project Structure
+
+```
+├── src/                 # Bot source code
+├── ui/                  # Control panel (web interface)
+├── transcriber/         # Python transcription scripts
+├── config/              # Character map configuration
+├── recordings/          # Recorded audio (created automatically)
+├── transcripts/         # Transcription output (created automatically)
+├── start.bat            # Windows launcher
+├── start-hidden.vbs     # Windows launcher (no terminal window)
+├── setup.bat            # Windows first-time setup
+└── setup.sh             # Mac/Linux first-time setup
+```
 
 ## License
 

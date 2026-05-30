@@ -1,9 +1,9 @@
 #!/bin/bash
-# D&D Session Recorder - Setup Script
+# GM Companion - Setup Script
 
 echo ""
 echo "============================================================"
-echo "  D&D Session Recorder - Setup"
+echo "  GM Companion - Setup"
 echo "============================================================"
 echo ""
 
@@ -121,20 +121,19 @@ if grep -q "DiscordUsername1" config/characters.json 2>/dev/null; then
     echo "  Character Map Setup"
     echo "------------------------------------------------------------"
     echo ""
-    echo "You'll need to map Discord user IDs to character names."
+    echo "Map your players' Discord names to their character names."
+    echo "You can do this in the control panel (Characters tab) or"
+    echo "edit config/characters.json directly:"
     echo ""
-    echo "To get a user ID:"
-    echo "  1. In Discord, go to Settings > Advanced > enable Developer Mode"
-    echo "  2. Right-click a username > Copy User ID"
-    echo ""
-    echo "Edit config/characters.json with your player mappings:"
     echo '  {'
     echo '    "characterMap": {'
-    echo '      "123456789012345678": "CharacterName",'
-    echo '      "987654321098765432": "AnotherCharacter"'
+    echo '      "Heather": "Gilbert",'
+    echo '      "Mike": "Thornwick"'
     echo '    },'
-    echo '    "dmUsername": "123456789012345678"'
+    echo '    "dmUsername": "YourDiscordName"'
     echo '  }'
+    echo ""
+    echo "Use Discord display names - no special IDs needed."
     echo ""
 fi
 
@@ -153,19 +152,21 @@ echo "  5. Copy the URL and open it in your browser"
 echo "  6. Select your server and authorize"
 echo ""
 echo "============================================================"
-echo "  Setup complete! To start the bot, run:"
+echo "  Setup complete! To start the bot:"
 echo ""
-echo "      npm start"
+echo "      Double-click start.bat (Windows)"
+echo "      npm start (Mac/Linux)"
 echo ""
-echo "  Commands in Discord:"
+echo "  This will launch the bot and open the control panel"
+echo "  in your browser at http://localhost:3000"
+echo ""
+echo "  From there you can manage characters, transcribe"
+echo "  recordings, and configure settings - all from the UI."
+echo ""
+echo "  Discord commands:"
 echo "      !join              - Bot joins your voice channel"
 echo '      !session start "X" - Start recording'
 echo "      !session stop      - Stop recording"
 echo "      !leave             - Bot leaves voice channel"
-echo ""
-echo "  After recording, transcribe with:"
-echo "      cd transcriber"
-echo "      source venv/bin/activate"
-echo "      python transcribe.py --preset quality"
 echo "============================================================"
 echo ""
