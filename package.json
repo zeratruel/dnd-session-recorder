@@ -1,7 +1,7 @@
 {
-  "name": "dnd-session-recorder",
+  "name": "gm-companion",
   "version": "1.0.0",
-  "description": "Discord bot that records D&D sessions and transcribes them locally",
+  "description": "Discord bot that records D&D sessions and transcribes them locally using Whisper",
   "main": "src/bot.js",
   "scripts": {
     "start": "node src/bot.js",
@@ -15,7 +15,6 @@
     "dotenv": "^16.4.0",
     "express": "^5.2.1",
     "libsodium-wrappers": "^0.8.4",
-    "node-notifier": "^10.0.1",
     "opusscript": "^0.0.8",
     "prism-media": "^1.3.5",
     "tweetnacl": "^1.0.3",

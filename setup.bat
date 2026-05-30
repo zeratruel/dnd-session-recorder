@@ -1,8 +1,8 @@
 @echo off
-title D&D Session Recorder - Setup
+title GM Companion - Setup
 echo.
 echo ============================================================
-echo   D^&D Session Recorder - Setup
+echo   GM Companion - Setup
 echo ============================================================
 echo.
 

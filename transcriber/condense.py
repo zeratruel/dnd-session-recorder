@@ -241,7 +241,7 @@ Examples:
     with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(output, f, indent=2, ensure_ascii=False)
 
-    print(f"\n✓ Condensed transcript saved to: {output_path}")
+    print(f"\n[OK] Condensed transcript saved to: {output_path}")
 
 
 if __name__ == "__main__":

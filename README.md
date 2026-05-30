@@ -1,11 +1,12 @@
-# D&D Session Recorder Bot
+# GM Companion
 
-A Discord bot that records voice channel audio during D&D sessions and transcribes them locally using Whisper. Free, private, runs entirely on your hardware. Includes a web-based control panel — no command line needed after setup.
+A Discord bot by **Safe Port Gaming** that records voice channel audio during tabletop RPG sessions and transcribes them locally using Whisper. Free, private, runs entirely on your hardware.
 
 ## Features
 
 - **One-click launch** — double-click `start.bat` and everything runs
 - **Web control panel** — manage recordings, transcribe, and configure from your browser
+- **Light/dark theme** — matches Safe Port Gaming's visual style
 - Record per-user audio streams (perfect speaker attribution)
 - Transcribe locally with faster-whisper (free, no API keys)
 - Auto-detects GPU for fast transcription, falls back to CPU
@@ -65,8 +66,9 @@ Once running, open **http://localhost:3000** to access:
 
 | Tab | What it does |
 |-----|-------------|
-| **Recordings** | View all recorded sessions, click to transcribe |
-| **Transcripts** | View, read, and condense transcripts |
+| **Recordings** | View all recorded sessions, click to transcribe or delete |
+| **Transcripts** | View, read, condense, or delete full transcripts |
+| **Condensed** | View and manage condensed transcript versions |
 | **Characters** | Map Discord names to character names |
 | **Settings** | Configure bot token and command prefix |
 
@@ -107,7 +109,7 @@ Open the **Characters** tab in the control panel, or edit `config/characters.jso
 }
 ```
 
-Use Discord display names — no need to look up user IDs.
+Use Discord display names — no need to look up user IDs. User IDs also work if preferred.
 
 ## Discord Commands
 
@@ -185,10 +187,10 @@ python condense.py transcripts/session.json --mode aggressive
 │   ├── ui-server.js     # Web control panel server
 │   ├── recorder.js      # Audio recording logic
 │   ├── opus-decoder.js  # Opus to PCM stream decoder
-│   └── utils.js         # Shared utilities
+│   └── utils.js         # Character map resolution + utilities
 ├── ui/
 │   ├── index.html       # Control panel page
-│   ├── style.css        # Styling
+│   ├── style.css        # Safe Port Gaming themed styling
 │   └── app.js           # Frontend logic
 ├── transcriber/
 │   ├── transcribe.py    # Main transcription pipeline
@@ -239,3 +241,7 @@ python condense.py transcripts/session.json --mode aggressive
 **Control panel won't open:**
 - Make sure the bot is running (`start.bat` or `npm start`)
 - Try manually opening http://localhost:3000 in your browser
+
+## License
+
+Made with care by Safe Port Gaming.

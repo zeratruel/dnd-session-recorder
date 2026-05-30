@@ -1,5 +1,5 @@
 const { Client, GatewayIntentBits, Events } = require('discord.js');
-const { joinVoiceChannel, VoiceConnectionStatus, entersState, getVoiceConnection } = require('@discordjs/voice');
+const { joinVoiceChannel, VoiceConnectionStatus, entersState } = require('@discordjs/voice');
 const { SessionRecorder } = require('./recorder');
 const { resolveCharacterMap } = require('./utils');
 const botState = require('./bot-state');
@@ -8,9 +8,8 @@ const path = require('path');
 require('dotenv').config();
 
 // Load DAVE encryption support
-let DAVESession;
 try {
-  DAVESession = require('@snazzah/davey');
+  require('@snazzah/davey');
 } catch {
   console.warn('Warning: @snazzah/davey not found. DAVE encryption may not work.');
 }
@@ -203,7 +202,7 @@ async function handleStatus(message) {
 
 async function handleHelp(message) {
   const help = [
-    '**D&D Session Recorder**',
+    '**GM Companion**',
     '',
     `\`${PREFIX}join\` — Join your current voice channel`,
     `\`${PREFIX}leave\` — Leave voice channel (stops recording if active)`,

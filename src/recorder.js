@@ -1,5 +1,4 @@
 const { EndBehaviorType } = require('@discordjs/voice');
-const { pipeline } = require('stream/promises');
 const { createWriteStream, mkdirSync } = require('fs');
 const { join } = require('path');
 const { OpusDecodingStream } = require('./opus-decoder');
@@ -56,8 +55,6 @@ class SessionRecorder {
       },
     });
 
-    // Resolve username from the connection's guild
-    const member = this.connection.joinConfig;
     const filename = `${userId}.pcm`;
     const filePath = join(this.outputDir, filename);
     const writeStream = createWriteStream(filePath);

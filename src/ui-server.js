@@ -65,39 +65,155 @@ app.get('/api/recordings', (req, res) => {
   res.json(sessions);
 });
 
-// Get list of transcripts
+// Get list of transcripts (full only, excludes condensed)
 app.get('/api/transcripts', (req, res) => {
-  const transcriptsDir = path.join(process.cwd(), 'transcriber', 'transcripts');
-  if (!fs.existsSync(transcriptsDir)) return res.json([]);
+  // Check both possible transcript locations
+  const transcriptsDirs = [
+    path.join(process.cwd(), 'transcripts'),
+    path.join(process.cwd(), 'transcriber', 'transcripts'),
+  ];
 
-  const files = fs.readdirSync(transcriptsDir)
-    .filter(f => f.endsWith('.json'))
-    .map(file => {
-      const filePath = path.join(transcriptsDir, file);
-      let data = {};
-      try { data = JSON.parse(fs.readFileSync(filePath, 'utf-8')); } catch {}
-      return {
-        file,
-        title: data.title || file,
-        date: data.date || '',
-        segments: (data.transcript || []).length,
-        duration: data.duration || '',
-      };
-    })
-    .sort((a, b) => b.file.localeCompare(a.file));
+  let allFiles = [];
 
-  res.json(files);
+  for (const transcriptsDir of transcriptsDirs) {
+    if (!fs.existsSync(transcriptsDir)) continue;
+
+    const files = fs.readdirSync(transcriptsDir)
+      .filter(f => f.endsWith('.json') && !f.includes('_condensed') && !f.includes('_aggressive') && !f.includes('_game-only'))
+      .map(file => {
+        const filePath = path.join(transcriptsDir, file);
+        const stat = fs.statSync(filePath);
+        let data = {};
+        try { data = JSON.parse(fs.readFileSync(filePath, 'utf-8')); } catch {}
+        return {
+          file,
+          dir: transcriptsDir,
+          title: data.title || file,
+          date: data.date || '',
+          segments: (data.transcript || []).length,
+          duration: data.duration || '',
+          createdAt: stat.mtimeMs,
+          createdAtStr: stat.mtime.toLocaleString(),
+        };
+      });
+
+    allFiles = allFiles.concat(files);
+  }
+
+  allFiles.sort((a, b) => b.createdAt - a.createdAt);
+  res.json(allFiles);
+});
+
+// Get list of condensed transcripts only
+app.get('/api/condensed', (req, res) => {
+  const transcriptsDirs = [
+    path.join(process.cwd(), 'transcripts'),
+    path.join(process.cwd(), 'transcriber', 'transcripts'),
+  ];
+
+  let allFiles = [];
+
+  for (const transcriptsDir of transcriptsDirs) {
+    if (!fs.existsSync(transcriptsDir)) continue;
+
+    const files = fs.readdirSync(transcriptsDir)
+      .filter(f => f.endsWith('.json') && (f.includes('_condensed') || f.includes('_aggressive') || f.includes('_game-only')))
+      .map(file => {
+        const filePath = path.join(transcriptsDir, file);
+        const stat = fs.statSync(filePath);
+        let data = {};
+        try { data = JSON.parse(fs.readFileSync(filePath, 'utf-8')); } catch {}
+
+        // Determine the mode from filename
+        let mode = 'condensed';
+        if (file.includes('_aggressive')) mode = 'aggressive';
+        else if (file.includes('_game-only')) mode = 'game-only';
+
+        return {
+          file,
+          dir: transcriptsDir,
+          title: data.title || file,
+          date: data.date || '',
+          segments: (data.transcript || []).length,
+          duration: data.duration || '',
+          mode,
+          createdAt: stat.mtimeMs,
+          createdAtStr: stat.mtime.toLocaleString(),
+        };
+      });
+
+    allFiles = allFiles.concat(files);
+  }
+
+  allFiles.sort((a, b) => b.createdAt - a.createdAt);
+  res.json(allFiles);
 });
 
 // Get a specific transcript
 app.get('/api/transcripts/:file', (req, res) => {
-  const filePath = path.join(process.cwd(), 'transcriber', 'transcripts', req.params.file);
-  if (!fs.existsSync(filePath)) return res.status(404).json({ error: 'Not found' });
+  const locations = [
+    path.join(process.cwd(), 'transcripts', req.params.file),
+    path.join(process.cwd(), 'transcriber', 'transcripts', req.params.file),
+  ];
+  const filePath = locations.find(p => fs.existsSync(p));
+  if (!filePath) return res.status(404).json({ error: 'Not found' });
   const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
   res.json(data);
 });
 
-// Run transcription
+// Run transcription (with progress streaming via SSE)
+app.get('/api/transcribe/progress', (req, res) => {
+  const { folder, preset } = req.query;
+  const recordingPath = folder
+    ? path.join('recordings', folder)
+    : undefined;
+
+  const venvPython = path.join(process.cwd(), 'transcriber', 'venv', 'Scripts', 'python.exe');
+  const scriptPath = path.join(process.cwd(), 'transcriber', 'transcribe.py');
+
+  const args = ['-u', scriptPath]; // -u for unbuffered output
+  if (recordingPath) args.push(recordingPath);
+  args.push('--preset', preset || 'quality');
+
+  res.setHeader('Content-Type', 'text/event-stream');
+  res.setHeader('Cache-Control', 'no-cache');
+  res.setHeader('Connection', 'keep-alive');
+
+  const proc = spawn(venvPython, args, { cwd: process.cwd() });
+
+  let output = '';
+
+  proc.stdout.on('data', (data) => {
+    const text = data.toString();
+    output += text;
+    // Parse progress from output lines
+    const lines = text.split('\n');
+    for (const line of lines) {
+      if (line.trim()) {
+        res.write(`data: ${JSON.stringify({ type: 'log', message: line.trim() })}\n\n`);
+      }
+    }
+  });
+
+  proc.stderr.on('data', (data) => {
+    output += data.toString();
+  });
+
+  proc.on('close', (code) => {
+    if (code === 0) {
+      res.write(`data: ${JSON.stringify({ type: 'done', success: true, output })}\n\n`);
+    } else {
+      res.write(`data: ${JSON.stringify({ type: 'done', success: false, output })}\n\n`);
+    }
+    res.end();
+  });
+
+  req.on('close', () => {
+    proc.kill();
+  });
+});
+
+// Run transcription (non-streaming fallback)
 app.post('/api/transcribe', (req, res) => {
   const { folder, preset } = req.body;
   const recordingPath = folder
@@ -131,7 +247,14 @@ app.post('/api/transcribe', (req, res) => {
 // Run condenser
 app.post('/api/condense', (req, res) => {
   const { file, mode } = req.body;
-  const transcriptPath = path.join(process.cwd(), 'transcriber', 'transcripts', file);
+
+  // Find the transcript in either location
+  const locations = [
+    path.join(process.cwd(), 'transcripts', file),
+    path.join(process.cwd(), 'transcriber', 'transcripts', file),
+  ];
+  const transcriptPath = locations.find(p => fs.existsSync(p));
+  if (!transcriptPath) return res.json({ success: false, error: `File not found: ${file}` });
 
   const venvPython = path.join(process.cwd(), 'transcriber', 'venv', 'Scripts', 'python.exe');
   const scriptPath = path.join(process.cwd(), 'transcriber', 'condense.py');
@@ -148,11 +271,41 @@ app.post('/api/condense', (req, res) => {
 
   proc.on('close', (code) => {
     if (code === 0) {
-      res.json({ success: true, output });
+      // Determine the output filename
+      const stem = file.replace('.json', '');
+      const suffix = mode && mode !== 'normal' ? `_${mode}` : '_condensed';
+      const outputFile = `${stem}${suffix}.json`;
+      res.json({ success: true, output, outputFile });
     } else {
       res.json({ success: false, output, error });
     }
   });
+});
+
+// Delete a recording
+app.delete('/api/recordings/:folder', (req, res) => {
+  const folderPath = path.join(process.cwd(), 'recordings', req.params.folder);
+  if (!fs.existsSync(folderPath)) return res.status(404).json({ error: 'Not found' });
+
+  fs.rmSync(folderPath, { recursive: true, force: true });
+  res.json({ success: true });
+});
+
+// Delete a transcript
+app.delete('/api/transcripts/:file', (req, res) => {
+  const locations = [
+    path.join(process.cwd(), 'transcripts', req.params.file),
+    path.join(process.cwd(), 'transcriber', 'transcripts', req.params.file),
+  ];
+  const filePath = locations.find(p => fs.existsSync(p));
+  if (!filePath) return res.status(404).json({ error: 'Not found' });
+
+  fs.unlinkSync(filePath);
+  // Also delete the .txt version if it exists
+  const txtPath = filePath.replace('.json', '.txt');
+  if (fs.existsSync(txtPath)) fs.unlinkSync(txtPath);
+
+  res.json({ success: true });
 });
 
 // Get .env config (token presence only, never expose the actual token)

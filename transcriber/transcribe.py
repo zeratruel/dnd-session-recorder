@@ -12,7 +12,6 @@ import os
 import sys
 import json
 import wave
-import struct
 import argparse
 from pathlib import Path
 from datetime import timedelta
@@ -59,13 +58,24 @@ def detect_device() -> tuple[str, str]:
     try:
         import ctranslate2
         if "cuda" in ctranslate2.get_supported_compute_types("cuda"):
-            print("NVIDIA GPU detected — using CUDA acceleration")
+            print("NVIDIA GPU detected -- using CUDA acceleration")
+            return "cuda", "float16"
+    except Exception:
+        pass
+
+    # Also check if nvidia-smi is available as a fallback detection
+    import subprocess
+    try:
+        result = subprocess.run(["nvidia-smi"], capture_output=True, timeout=5)
+        if result.returncode == 0:
+            # GPU exists but ctranslate2 couldn't use it - try cuda anyway
+            print("NVIDIA GPU detected (via nvidia-smi) -- attempting CUDA")
             return "cuda", "float16"
     except Exception:
         pass
 
     # Fallback to CPU
-    print("No GPU detected — using CPU (this will be slower)")
+    print("No GPU detected -- using CPU (this will be slower)")
     return "cpu", "int8"
 
 
@@ -259,7 +269,7 @@ def save_output(output: dict, session_dir: Path):
     with open(output_path, 'w', encoding='utf-8') as f:
         json.dump(output, f, indent=2, ensure_ascii=False)
 
-    print(f"\n✓ Full transcript saved to: {output_path}")
+    print(f"\n[OK] Full transcript saved to: {output_path}")
 
     # Also save a plain text version
     txt_path = output_path.with_suffix('.txt')
@@ -270,7 +280,7 @@ def save_output(output: dict, session_dir: Path):
         f.write(f"{'=' * 60}\n\n")
         f.write(output['notes'])
 
-    print(f"✓ Plain text transcript saved to: {txt_path}")
+    print(f"[OK] Plain text transcript saved to: {txt_path}")
 
     return output_path
 

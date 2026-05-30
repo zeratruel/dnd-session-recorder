@@ -1,3 +1,20 @@
+// --- Theme Toggle ---
+const themeToggle = document.getElementById('theme-toggle');
+const savedTheme = localStorage.getItem('theme');
+
+// Apply saved theme or default to dark
+if (savedTheme === 'light') {
+  document.body.classList.remove('dark-mode');
+} else {
+  document.body.classList.add('dark-mode');
+}
+
+themeToggle.addEventListener('click', () => {
+  document.body.classList.toggle('dark-mode');
+  const isDark = document.body.classList.contains('dark-mode');
+  localStorage.setItem('theme', isDark ? 'dark' : 'light');
+});
+
 // --- Tab Navigation ---
 document.querySelectorAll('.tab').forEach(tab => {
   tab.addEventListener('click', () => {
@@ -48,6 +65,7 @@ async function loadRecordings() {
       </div>
       <div class="card-actions">
         <button class="btn btn-small" onclick="openTranscribeModal('${r.folder}', '${r.title}')">Transcribe</button>
+        <button class="btn btn-small btn-danger" onclick="deleteRecording('${r.folder}')">Delete</button>
       </div>
     </div>
   `).join('');
@@ -68,11 +86,12 @@ async function loadTranscripts() {
     <div class="card">
       <div class="card-info">
         <h4>${t.title}</h4>
-        <span class="meta">${t.date} · ${t.segments} segments · ${t.duration}</span>
+        <span class="meta">${t.date} · ${t.segments} segments · ${t.duration} · ${t.createdAtStr}</span>
       </div>
       <div class="card-actions">
         <button class="btn btn-small" onclick="viewTranscript('${t.file}')">View</button>
         <button class="btn btn-small" onclick="openCondenseModal('${t.file}', '${t.title}')">Condense</button>
+        <button class="btn btn-small btn-danger" onclick="deleteTranscript('${t.file}')">Delete</button>
       </div>
     </div>
   `).join('');
@@ -110,32 +129,90 @@ document.getElementById('transcribe-start').addEventListener('click', async () =
   const preset = document.getElementById('transcribe-preset').value;
   document.getElementById('transcribe-progress').classList.remove('hidden');
   document.getElementById('transcribe-start').disabled = true;
+  document.getElementById('transcribe-cancel').disabled = true;
+
+  const progressBar = document.getElementById('transcribe-progress-bar');
+  const progressText = document.getElementById('transcribe-progress-text');
+  progressBar.style.width = '5%';
+  progressText.textContent = 'Starting transcription...';
+
+  let speakerCount = 0;
+  let speakersDone = 0;
 
   try {
-    const res = await fetch('/api/transcribe', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ folder: transcribeFolder, preset }),
-    });
-    const data = await res.json();
+    const evtSource = new EventSource(`/api/transcribe/progress?folder=${encodeURIComponent(transcribeFolder)}&preset=${encodeURIComponent(preset)}`);
 
-    document.getElementById('transcribe-progress').classList.add('hidden');
-    const result = document.getElementById('transcribe-result');
-    result.classList.remove('hidden');
+    evtSource.onmessage = (event) => {
+      const data = JSON.parse(event.data);
 
-    if (data.success) {
-      result.innerHTML = `<p class="status-msg success">✓ Transcription complete!</p><pre style="font-size:0.75rem;color:#aaa;margin-top:0.5rem;white-space:pre-wrap;">${data.output}</pre>`;
-      loadTranscripts();
-    } else {
-      result.innerHTML = `<p class="status-msg error">✗ Transcription failed</p><pre style="font-size:0.75rem;color:#cf6f6f;margin-top:0.5rem;white-space:pre-wrap;">${data.error || data.output}</pre>`;
-    }
+      if (data.type === 'log') {
+        const msg = data.message;
+
+        // Detect model loading
+        if (msg.includes('Loading Whisper model')) {
+          progressBar.style.width = '10%';
+          progressText.textContent = 'Loading AI model...';
+        }
+        // Detect model loaded
+        else if (msg.includes('Model loaded')) {
+          progressBar.style.width = '20%';
+          progressText.textContent = 'Model loaded. Transcribing speakers...';
+        }
+        // Detect speaker start
+        else if (msg.includes('Transcribing:')) {
+          const speaker = msg.match(/Transcribing:\s*(.+)\.\.\./)?.[1] || 'speaker';
+          speakerCount++;
+          progressText.textContent = `Transcribing: ${speaker}...`;
+        }
+        // Detect speaker done
+        else if (msg.includes('segments transcribed')) {
+          speakersDone++;
+          const pct = Math.min(20 + (speakersDone / Math.max(speakerCount, 1)) * 70, 90);
+          progressBar.style.width = `${pct}%`;
+        }
+        // Detect save
+        else if (msg.includes('transcript saved')) {
+          progressBar.style.width = '95%';
+          progressText.textContent = 'Saving transcript...';
+        }
+      }
+
+      if (data.type === 'done') {
+        evtSource.close();
+        progressBar.style.width = '100%';
+        document.getElementById('transcribe-progress').classList.add('hidden');
+
+        const result = document.getElementById('transcribe-result');
+        result.classList.remove('hidden');
+
+        if (data.success) {
+          result.innerHTML = `<p class="status-msg success">[OK] Transcription complete!</p><pre style="font-size:0.75rem;color:#aaa;margin-top:0.5rem;white-space:pre-wrap;">${data.output}</pre><div style="margin-top:1rem;text-align:right;"><button class="btn btn-primary" onclick="closeTranscribeAndGoToTranscripts()">View Transcripts</button></div>`;
+          loadTranscripts();
+          document.getElementById('transcribe-start').classList.add('hidden');
+          document.getElementById('transcribe-cancel').classList.add('hidden');
+        } else {
+          result.innerHTML = `<p class="status-msg error">[X] Transcription failed</p><pre style="font-size:0.75rem;color:#cf6f6f;margin-top:0.5rem;white-space:pre-wrap;">${data.output}</pre>`;
+          document.getElementById('transcribe-start').disabled = false;
+          document.getElementById('transcribe-cancel').disabled = false;
+        }
+      }
+    };
+
+    evtSource.onerror = () => {
+      evtSource.close();
+      document.getElementById('transcribe-progress').classList.add('hidden');
+      document.getElementById('transcribe-result').innerHTML = `<p class="status-msg error">✗ Connection lost during transcription</p>`;
+      document.getElementById('transcribe-result').classList.remove('hidden');
+      document.getElementById('transcribe-start').disabled = false;
+      document.getElementById('transcribe-cancel').disabled = false;
+    };
   } catch (err) {
     document.getElementById('transcribe-progress').classList.add('hidden');
     document.getElementById('transcribe-result').innerHTML = `<p class="status-msg error">✗ Error: ${err.message}</p>`;
     document.getElementById('transcribe-result').classList.remove('hidden');
+    document.getElementById('transcribe-start').disabled = false;
+    document.getElementById('transcribe-cancel').disabled = false;
   }
-
-  document.getElementById('transcribe-start').disabled = false;
 });
 
 // --- Condense Modal ---
@@ -171,10 +248,11 @@ document.getElementById('condense-start').addEventListener('click', async () => 
     result.classList.remove('hidden');
 
     if (data.success) {
-      result.innerHTML = `<p class="status-msg success">✓ Condensed!</p><pre style="font-size:0.75rem;color:#aaa;margin-top:0.5rem;white-space:pre-wrap;">${data.output}</pre>`;
+      result.innerHTML = `<p class="status-msg success">[OK] Condensed!</p><p style="font-size:0.82rem;color:#aaa;margin-top:0.5rem;">Saved to: <strong>${data.outputFile || 'condensed file'}</strong></p><pre style="font-size:0.75rem;color:#aaa;margin-top:0.5rem;white-space:pre-wrap;">${data.output}</pre>`;
       loadTranscripts();
+      loadCondensed();
     } else {
-      result.innerHTML = `<p class="status-msg error">✗ Failed</p><pre style="font-size:0.75rem;color:#cf6f6f;margin-top:0.5rem;white-space:pre-wrap;">${data.error || data.output}</pre>`;
+      result.innerHTML = `<p class="status-msg error">[X] Failed</p><pre style="font-size:0.75rem;color:#cf6f6f;margin-top:0.5rem;white-space:pre-wrap;">${data.error || data.output}</pre>`;
     }
   } catch (err) {
     document.getElementById('condense-progress').classList.add('hidden');
@@ -295,8 +373,82 @@ function formatDuration(seconds) {
   return `${mins}:${secs.toString().padStart(2, '0')}`;
 }
 
+function closeTranscribeAndGoToTranscripts() {
+  document.getElementById('transcribe-modal').classList.add('hidden');
+  // Reset modal state for next use
+  document.getElementById('transcribe-start').classList.remove('hidden');
+  document.getElementById('transcribe-cancel').classList.remove('hidden');
+  document.getElementById('transcribe-result').classList.add('hidden');
+  // Switch to transcripts tab
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelector('[data-tab="transcripts"]').classList.add('active');
+  document.getElementById('tab-transcripts').classList.add('active');
+  loadTranscripts();
+}
+
+async function deleteRecording(folder) {
+  if (!confirm(`Delete recording "${folder}"? This cannot be undone.`)) return;
+  const res = await fetch(`/api/recordings/${encodeURIComponent(folder)}`, { method: 'DELETE' });
+  if (res.ok) loadRecordings();
+}
+
+async function deleteTranscript(file) {
+  if (!confirm(`Delete transcript "${file}"? This cannot be undone.`)) return;
+  const res = await fetch(`/api/transcripts/${encodeURIComponent(file)}`, { method: 'DELETE' });
+  if (res.ok) {
+    loadTranscripts();
+    loadCondensed();
+  }
+}
+
+// --- Condensed Tab ---
+async function loadCondensed() {
+  const res = await fetch('/api/condensed');
+  const condensed = await res.json();
+  const list = document.getElementById('condensed-list');
+
+  if (condensed.length === 0) {
+    list.innerHTML = '<p class="empty-state">No condensed transcripts yet. Use the Condense button on a transcript.</p>';
+    return;
+  }
+
+  list.innerHTML = condensed.map(t => `
+    <div class="card">
+      <div class="card-info">
+        <h4>${t.title} <span class="badge">${t.mode}</span></h4>
+        <span class="meta">${t.date} · ${t.segments} segments · ${t.duration} · ${t.createdAtStr}</span>
+      </div>
+      <div class="card-actions">
+        <button class="btn btn-small" onclick="viewCondensed('${t.file}')">View</button>
+        <button class="btn btn-small btn-danger" onclick="deleteCondensed('${t.file}')">Delete</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function viewCondensed(file) {
+  const res = await fetch(`/api/transcripts/${file}`);
+  const data = await res.json();
+
+  document.getElementById('condensed-viewer-title').textContent = data.title;
+  document.getElementById('condensed-viewer-content').textContent = data.notes;
+  document.getElementById('condensed-viewer').classList.remove('hidden');
+}
+
+document.getElementById('close-condensed-viewer').addEventListener('click', () => {
+  document.getElementById('condensed-viewer').classList.add('hidden');
+});
+
+async function deleteCondensed(file) {
+  if (!confirm(`Delete condensed transcript "${file}"? This cannot be undone.`)) return;
+  const res = await fetch(`/api/transcripts/${encodeURIComponent(file)}`, { method: 'DELETE' });
+  if (res.ok) loadCondensed();
+}
+
 // --- Init ---
 loadRecordings();
 loadTranscripts();
+loadCondensed();
 loadCharacters();
 loadSettings();
